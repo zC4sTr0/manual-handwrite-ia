@@ -1,0 +1,24 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+
+# Dados pessoais - NUNCA comitar (amostras, datasets, estilos, pesos, saídas)
+/samples/*
+!/samples/.gitkeep
+/scans/
+/dataset/
+/styles/
+/models/
+/output/
+*.ckpt
+*.safetensors
+*.pt
+
+.env
+.DS_Store
+Thumbs.db

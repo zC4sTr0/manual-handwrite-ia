@@ -1,0 +1,23 @@
+# manual-handwrite-ia context index
+
+> Leia o estado atual primeiro. Carregue documentos detalhados só quando o assunto for relevante.
+
+## Trabalho atual
+
+- [Estado do projeto](docs/PROJECT-STATE.md): fase atual, próximo teste, bloqueios, última verificação
+- [Plano de implementação](docs/IMPLEMENTATION-PLAN.md): fases test-driven e critérios de aceite
+- [Plano operacional](.hermes/plans/manual-handwrite-ia-v1.md): cópia do plano para o Hermes
+
+## Produto e segurança
+
+- [Guia de agentes](AGENTS.md): regras carregadas quando um agente inicia no repo
+- [Ética e privacidade](docs/ETHICS-AND-PRIVACY.md): o que nunca fazer com amostras e saídas
+- [Arquitetura](docs/ARCHITECTURE.md): módulos, contratos e fluxo de dados
+- [Coleta de dados](docs/DATA-COLLECTION.md): folha-modelo, escaneamento, qualidade mínima
+- [Efeito de scan](docs/SCAN-EFFECT.md): estágios de degradação e presets
+- [Pesquisa](docs/RESEARCH.md): abordagens de síntese de caligrafia
+- [Roadmap](docs/ROADMAP.md): o que fica fora do v1
+
+## Entrada humana
+
+- [README](README.md)
