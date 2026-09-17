@@ -55,6 +55,7 @@ próximas fases.
 
 | Documento | Conteúdo |
 |---|---|
+| [docs/COMO-FUNCIONA.md](docs/COMO-FUNCIONA.md) | Explicação do pipeline para programadores tradicionais |
 | [AGENTS.md](AGENTS.md) | Regras para agentes (Hermes, Claude Code, Codex) |
 | [docs/PROJECT-STATE.md](docs/PROJECT-STATE.md) | Fase atual, próximo teste, bloqueios |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Módulos, fluxo de dados, contratos |

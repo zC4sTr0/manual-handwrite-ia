@@ -10,6 +10,7 @@
 
 ## Produto e segurança
 
+- [Como funciona](docs/COMO-FUNCIONA.md): explicação humana do pipeline, das entradas, saídas e etapas
 - [Guia de agentes](AGENTS.md): regras carregadas quando um agente inicia no repo
 - [Ética e privacidade](docs/ETHICS-AND-PRIVACY.md): o que nunca fazer com amostras e saídas
 - [Arquitetura](docs/ARCHITECTURE.md): módulos, contratos e fluxo de dados

@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Aprende a sua letra a partir de amostras escaneadas e gera manuscritos com aspecto de papel escaneado."
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "numpy>=2.4.6",
+    "pillow>=12.3.0",
+]
 
 [project.optional-dependencies]
 # Fase 5: torch, diffusers
