@@ -2,23 +2,22 @@
 
 ## Visão geral
 
-```
-folha-modelo (PDF) -> imprimir / preencher / escanear -> scans/*.jpg
-        |
-        v
-ingest: deskew -> binarize -> segment -> label -> dataset/<style>/glyphs/*.png + index.jsonl
-        |
-        v
-style (v1: GlyphBank | v2: NeuralStyle) -> styles/<style>/style.toml (+ pesos v2)
-        |
-        v
-compose: layout de linhas, jitter de baseline/inclinação/espaço -> página limpa (RGBA, 300 dpi)
-        |
-        v
-scan_effect: papel -> tinta -> geometria -> luz -> sensor -> JPEG -> página "escaneada"
-        |
-        v
-export -> PNG / PDF (metadado generator=manual-handwrite-ia)
+```mermaid
+flowchart LR
+  A[folhas naturais] --> B[normalização e segmentação]
+  B --> C[VLM em passes + verificação Python]
+  C --> D{confiança}
+  D -->|gold/silver| E[manifesto image-text]
+  D -->|quarantine| Q[fora do treino]
+  E --> F[cobertura e active capture]
+  E --> G[StylePack / backend]
+  T[target Python] --> H[geração de candidatos]
+  G --> H
+  H --> I[avaliador de conteúdo/estilo/qualidade]
+  I --> J[melhor linha]
+  J --> K[layout A4]
+  K --> L[scan simulator]
+  L --> O[PNG + PDF + generation.json]
 ```
 
 ## Módulos (`src/manual_handwrite/`)
@@ -27,8 +26,13 @@ export -> PNG / PDF (metadado generator=manual-handwrite-ia)
 |---|---|---|
 | `cli.py` | Entrada `handwrite`: `template`, `ingest`, `train`, `write`, `scanify` | 0+ |
 | `scan_effect/` | Pipeline de degradação puro (numpy in, numpy out), determinístico por `seed` | 1 |
-| `template.py` | Gera a folha-modelo PDF com grade e marcadores fiduciais (ArUco) | 2 |
-| `ingest/` | Detecta marcadores, corrige perspectiva, binariza (Sauvola), recorta células, rotula pela posição | 2 |
+| `ingest/` | Normaliza páginas e segmenta linhas por projeção horizontal, sem rede | 1 |
+| `data/` | Contratos de página, região, tiers de confiança e manifesto JSONL | 1 |
+| `coverage/` | Mede tokens/operadores observados e seleciona captura adaptativa | 1 |
+| `layout/` | Geometria A4, wrapping medido, indentação e quebras de página | 1 |
+| `export.py` | PNG/PDF com metadado obrigatório do gerador | 1 |
+| `template.py` | Gera a folha-modelo PDF com marcadores ArUco e grade de calibração | 2 |
+| `ingest/` (extensão) | Detecta marcadores, corrige perspectiva, binariza (Sauvola), recorta células, rotula pela posição | 2 |
 | `dataset.py` | Contrato do dataset: `index.jsonl` com `{char, variant, path, baseline, advance}` | 2 |
 | `safety.py` | Recusa de assinatura, checagem de `owner_consent` | 2 |
 | `style/glyphs.py` | v1: `GlyphBank` escolhe variantes, aplica ligaduras e jitter | 3 |
