@@ -6,6 +6,12 @@ extrair evidência pequena de glifos e medir o conteúdo de uma transcrição. E
 treinado: é a fronteira verificável entre dados consentidos, evidência auditável
 e um backend que ainda não existe.
 
+## Estado atual verificável
+
+As seções abaixo descrevem somente contratos e testes presentes no repositório.
+Passar os testes confirma comportamento local com fixtures; não transforma o
+checkpoint em um sistema de geração nem em uma validação de letra real.
+
 ## O que entra e o que não entra
 
 O estilo permitido é o estilo do próprio titular. Um `StylePack` é um manifesto
@@ -204,6 +210,14 @@ projeto, use `uv run pytest -q && uv run ruff check . && uv run ruff format
 --check .`. Esse gate verifica contratos locais; não é evidência de que exista
 um backend VLM ou de geração.
 
+## Futuro condicionado, não estado atual
+
+O próximo marco é implementar, separadamente, um backend local de renderização
+que consuma um `StylePack` consentido, defina contrato de pixels/proveniência e
+seja medido por experimento reproduzível. Isso depende de dataset do titular,
+contrato aprovado e critérios de segurança; não é oferecido pelos comandos
+atuais. `train` e `write` permanecem nomes de fases futuras.
+
 ## Critério honesto de passagem
 
 Este checkpoint passa quando os contratos acima permanecem verdes: consentimento
@@ -214,7 +228,6 @@ protocolo VLM estrito e backend ausente declarado sem produzir saída. Ele falha
 `Candidate` como imagem, relatar `style`/`quality` como medidos, inventar uma
 cobertura, ou afirmar que `UnavailableBackend` personalizou a caligrafia.
 
-O próximo marco real não é “treinar” por retórica: é implementar um backend de
-renderização local que consuma um `StylePack` consentido, acrescente um contrato
-de pixels/proveniência e seja medido por um experimento reproduzível. Até lá,
-a personalização está documentada e protegida, não concluída.
+Até lá, a personalização está documentada e protegida, não concluída. O
+roadmap e as dependências estão em [`docs/ROADMAP.md`](../ROADMAP.md); o estado
+canônico continua em [`docs/PROJECT-STATE.md`](../PROJECT-STATE.md).

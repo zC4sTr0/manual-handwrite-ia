@@ -1,64 +1,102 @@
 # Arquitetura
 
-## Visão geral
+## Estado atual
+
+O repositório contém um núcleo offline de contratos, pré-processamento,
+cobertura e simulação de scan. Ele ainda **não** contém um renderizador de
+manuscrito personalizado. A arquitetura abaixo separa o que existe hoje do
+que continua sendo desenho futuro.
+
+## Fluxo implementado
 
 ```mermaid
 flowchart LR
-  A[folhas naturais] --> B[normalização e segmentação]
-  B --> C[VLM em passes + verificação Python]
-  C --> D{confiança}
-  D -->|gold/silver| E[manifesto image-text]
-  D -->|quarantine| Q[fora do treino]
-  E --> F[cobertura e active capture]
-  E --> G[StylePack / backend]
-  T[target Python] --> H[geração de candidatos]
-  G --> H
-  H --> I[avaliador de conteúdo/estilo/qualidade]
-  I --> J[melhor linha]
-  J --> K[layout A4]
-  K --> L[scan simulator]
-  L --> O[PNG + PDF + generation.json]
+  A[imagem Pillow ou array] --> B[manual_handwrite.ingest]
+  B --> C[normalize_page / segment_lines]
+  C --> D[regiões fornecidas ao source-pair]
+  D --> E[manifest JSONL GOLD]
+  T[source.py] --> E
+  X[texto Python] --> F[coverage]
+  F --> G[relatório de cobertura]
+  I[imagem] --> H[manual_handwrite.scan.scanify]
+  H --> J[preset + seed]
+  J --> K[PNG/JPEG/PDF]
 ```
 
-## Módulos (`src/manual_handwrite/`)
+`scanify` e os contratos de ingestão não fazem rede. A validação de respostas
+VLM em `transcribe/vlm_schema.py` também é apenas local: ela valida o JSON e a
+proveniência, mas não chama um provedor nem implementa um adaptador de VLM.
 
-| Módulo | Responsabilidade | Fase |
+## Módulos existentes (`src/manual_handwrite/`)
+
+| Módulo | Responsabilidade atual | Estado |
 |---|---|---|
-| `cli.py` | Entrada `handwrite`: `template`, `ingest`, `train`, `write`, `scanify` | 0+ |
-| `scan_effect/` | Pipeline de degradação puro (numpy in, numpy out), determinístico por `seed` | 1 |
-| `ingest/` | Normaliza páginas e segmenta linhas por projeção horizontal, sem rede | 1 |
-| `data/` | Contratos de página, região, tiers de confiança e manifesto JSONL | 1 |
-| `coverage/` | Mede tokens/operadores observados e seleciona captura adaptativa | 1 |
-| `layout/` | Geometria A4, wrapping medido, indentação e quebras de página | 1 |
-| `export.py` | PNG/PDF com metadado obrigatório do gerador | 1 |
-| `template.py` | Gera a folha-modelo PDF com marcadores ArUco e grade de calibração | 2 |
-| `ingest/` (extensão) | Detecta marcadores, corrige perspectiva, binariza (Sauvola), recorta células, rotula pela posição | 2 |
-| `dataset.py` | Contrato do dataset: `index.jsonl` com `{char, variant, path, baseline, advance}` | 2 |
-| `safety.py` | Recusa de assinatura, checagem de `owner_consent` | 2 |
-| `style/glyphs.py` | v1: `GlyphBank` escolhe variantes, aplica ligaduras e jitter | 3 |
-| `compose.py` | Layout: quebra de linha, margens, pauta, parágrafo | 3 |
-| `export.py` | PNG/PDF 300 dpi com metadados obrigatórios | 3 |
-| `style/neural.py` | v2: adaptador para modelo few-shot (extra `[neural]`) | 5 |
+| `cli.py` | CLI `handwrite` com `scanify`, `coverage` e `source-pair` | implementado |
+| `scan/` | Simulação determinística de aparência escaneada usando Pillow e `random.Random` | implementado |
+| `ingest/` | Orientação EXIF, conversão para tons de cinza e segmentação horizontal em `LineRegion` | implementado |
+| `data/` | `PageMetadata`, `LineRegion`, `ManifestEntry`, tiers Gold/Silver/Quarantine e JSONL | implementado |
+| `data/source_pair.py` | Ingestão local de par imagem + `source.py`, com consentimento, hash e regiões/textos fornecidos | implementado |
+| `coverage/` | Contagem de caracteres, tokens e operadores Python e seleção gulosa de snippets | implementado |
+| `style/` | `StylePack`/manifesto, referências relativas, hash, cobertura e `owner_consent`; extração conservadora de glifos em `glyphs.py` | implementado como contrato/extração, não como renderizador |
+| `layout/` | `PageSpec`, wrapping medido e posicionamento de linhas em páginas A4 | implementado como primitivas, não como composição final |
+| `export.py` | Exportação PNG/PDF com `generator=manual-handwrite-ia` | implementado |
+| `evaluation/` | Distância de edição, taxa de erro de caracteres e acurácia de tokens críticos; estilo/qualidade ficam indisponíveis | implementado |
+| `generation/` | Contrato de backend e `UnavailableBackend`; recusa renderização quando não há backend real | implementado como fronteira segura |
+| `transcribe/vlm_schema.py` | Schema local para os quatro passes de uma resposta VLM | implementado como validação, sem integração de modelo |
+| `reporting/` | Relatórios JSON/HTML de cobertura e confiança | implementado |
+| `experiments/` | Infraestrutura de benchmark/experimentos, sem modelo de geração | implementado como suporte |
 
-## Contratos principais
+## O que não está implementado
+
+Os nomes abaixo são arquitetura futura, não caminhos presentes nem APIs
+utilizáveis hoje:
+
+- `template.py`: geração de folha-modelo com marcadores, grade e variantes;
+- uma extensão de ingestão para detectar ArUco, corrigir perspectiva,
+  binarizar células e rotular automaticamente;
+- `dataset.py`: contrato separado de dataset de glifos com `char`, `variant`,
+  `baseline` e `advance`;
+- `safety.py`: módulo separado para política de consentimento — hoje as
+  validações relevantes estão em `data/source_pair.py` e `style/stylepack.py`;
+- `compose.py` e `compose_page`: composição/renderização de manuscrito — hoje
+  `layout` só posiciona texto e `generation` não produz pixels;
+- `Style.render_word`: não existe. `Style`/`render_word` não são contratos
+  atuais;
+- `style/neural.py`: adaptador neural futuro, dependente do extra opcional;
+- um backend `GlyphBank` que gere páginas; `style/glyphs.py` hoje faz apenas
+  extração conservadora de glifos críticos;
+- ingestão que invoque OCR/VLM, treinamento, captura ativa integrada à câmera
+  ou geração personalizada.
+
+## Contratos atuais relevantes
 
 ```python
-# scan_effect
-def scanify(page: np.ndarray, preset: str | ScanParams, seed: int) -> np.ndarray: ...
+from manual_handwrite.scan import scanify
 
-
-# style
-class Style(Protocol):
-    def render_word(self, text: str, rng: np.random.Generator) -> np.ndarray: ...  # RGBA
-
-
-# compose
-def compose_page(text: str, style: Style, page: PageSpec, seed: int) -> np.ndarray: ...
+result = scanify(pillow_image, seed=7, preset="foto-celular")
 ```
 
-## Fronteiras de confiança
+`scanify` recebe uma imagem Pillow (também aceita array NumPy na fronteira),
+retorna o mesmo tipo de representação, não altera a entrada e oferece os
+presets `scanner-escritorio`, `foto-celular`, `xerox-velho` e `limpo`.
+A implementação do scan usa Pillow e `random.Random`; não usa OpenCV nem
+`np.random.default_rng`.
 
-- `samples/`, `dataset/`, `styles/`, `models/`, `output/` são **dados pessoais**:
-  ignorados pelo git e nunca lidos em CI.
-- Nenhum módulo do núcleo faz rede. O extra `[neural]` só baixa pesos base
-  públicos via comando explícito (`handwrite model download`).
+As primitivas de layout são `PageSpec`, `wrap_text` e `layout_text` em
+[`src/manual_handwrite/layout/__init__.py`](../src/manual_handwrite/layout/__init__.py).
+A exportação está em
+[`src/manual_handwrite/export.py`](../src/manual_handwrite/export.py).
+
+## Fronteiras de confiança e privacidade
+
+- `samples/`, `dataset/`, `styles/`, `models/` e `output/` são dados pessoais;
+  não entram no git nem em CI.
+- Consentimento do proprietário é obrigatório para `source-pair` e `StylePack`;
+  marcadores de assinatura são recusados.
+- O caminho padrão é offline. Nenhum módulo do núcleo baixa pesos ou envia
+  imagens; integrações futuras devem exigir comando/flag explícito.
+- Arquivos exportados preservam `generator=manual-handwrite-ia` no PNG e no
+  Producer do PDF.
+
+Para o estado operacional, consulte [`PROJECT-STATE.md`](PROJECT-STATE.md) e,
+para as fases planejadas, [`IMPLEMENTATION-PLAN.md`](IMPLEMENTATION-PLAN.md).
