@@ -1,24 +1,40 @@
 # Pesquisa: síntese de caligrafia
 
-Resumo das abordagens para decidir a v2. **Validar versões, licenças e
-disponibilidade de pesos antes de adotar qualquer uma.**
+Resumo das abordagens para decidir uma v2. Esta é uma nota de pesquisa, não uma
+lista de dependências adotadas. Claims externos (afirmações sobre artigos,
+repositórios, pesos, licenças ou datasets) são **não verificados localmente**:
+as URLs abaixo são pontos de partida e precisam de conferência de versão,
+licença, hash e execução antes de qualquer decisão.
 
 ## Famílias de abordagem
 
 | Abordagem | Ideia | Prós | Contras |
 |---|---|---|---|
-| Síntese por glifos (v1) | Recortar e recombinar amostras reais com variação | Poucos dados, controle total, roda na CPU | Conexões cursivas artificiais |
-| Traço online (RNN/MDN) | Gerar a sequência de pontos da caneta (Graves, 2013, "Generating Sequences With Recurrent Neural Networks") | Traços contínuos e naturais | Precisa de dados de caneta digital, não de scans |
-| GAN / Transformer few-shot | Imagem de palavra condicionada ao estilo (ex.: Handwriting Transformers, 2021; VATr, 2023) | Poucas amostras de estilo | Artefatos em palavras longas |
-| Difusão few-shot | Difusão condicionada a amostras de estilo (ex.: WordStylist, 2023; One-DM e DiffusionPen, 2024) | Melhor fidelidade | GPU, inferência lenta, pesos grandes |
+| Síntese por glifos (v1 futuro) | Recortar e recombinar amostras reais com variação | Poucos dados, controle total, CPU | Conexões cursivas artificiais |
+| Traço online com RNN/MDN (rede neural recorrente / mistura de densidades) | Gerar sequência de pontos da caneta | Traços contínuos | Exige dados de caneta, não scans |
+| GAN (rede generativa adversarial) / Transformer few-shot | Imagem condicionada ao estilo | Poucas amostras de estilo | Artefatos em palavras longas |
+| Difusão few-shot | Difusão condicionada a referências | Fidelidade potencialmente maior | GPU, inferência lenta, pesos grandes |
 
 ## Questões específicas do português
 
-- Acentos e cedilha são raros nos datasets públicos (o IAM é em inglês). A v1
-  cobre isso com glifos próprios; na v2 é preciso incluir palavras acentuadas
-  no fine-tuning ou compor o acento sobre a letra base.
-- Datasets de referência: IAM Handwriting (inglês), CVL, RIMES (francês).
+A hipótese de que acentos e cedilha são raros nos datasets públicos precisa ser
+verificada no dataset escolhido; IAM, CVL e RIMES têm idiomas e condições
+próprios. Para o projeto, a pergunta prática é cobertura de `á`, `ã`, `ç`,
+pontuação e combinações reais. Não tratar essa hipótese como medição local.
 
-## Decisão atual
+## Estado e decisão provisória
 
-v1 = glifos (Fase 3). Reavaliar difusão few-shot na Fase 5, com o dataset pessoal pronto.
+O estado local continua raster-first e sem backend neural executado. A decisão
+provisória é manter a base de glifos como baseline futuro e reavaliar um modelo
+de difusão somente na Fase 5, depois de dataset pessoal consentido e benchmark.
+Isso não significa que a Fase 3 esteja implementada.
+
+## Critérios de pesquisa antes de adotar
+
+Para cada candidato, registrar artigo primário, código oficial, commit/tag,
+checkpoint e hash, licença do código, licença dos pesos e termos do dataset,
+requisitos de hardware, comando de reprodução e resultado local. Se qualquer
+item faltar, manter como hipótese/lead, não como dependência.
+
+Veja a nota detalhada em [`research/2026-model-landscape.md`](research/2026-model-landscape.md)
+e o protocolo de experimento em [`experiments/EXP-001.md`](experiments/EXP-001.md).
